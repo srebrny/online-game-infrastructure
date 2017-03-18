@@ -1,0 +1,15 @@
+version: "1"
+services:
+   lbs:
+     image: ubuntu:trusty
+     ports:
+       - "8080:80"
+volumes:
+  data:
+    external: true
+
+registries: {}
+  # Add optional registries used for deployment. For example:
+  #  google:
+  #    url: https://gcr.io
+  #    namespace: my-cool-project-xxxxxx   
