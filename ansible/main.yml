@@ -11,8 +11,54 @@
   - name: 'update apt cache'
     raw: apt-get update -y
   - name: 'Fix issue when python is not installed on new server.'
-    raw: apt-get install python-simplejson python-minimal -y
+    raw: apt-get install python-simplejson python2.7-minimal ca-certificates -y
 
 - hosts: lbs
   roles:
-   - jdauphant.nginx
+    - spk83.dumb-init
+    - jdauphant.nginx
+
+- hosts: whp
+  vars:
+    - flaskapp_app_packages: [
+        'virtualenvwrapper'
+    ]
+    - flaskapp_app_directory: /srv/app
+    - flaskapp_app_requirements: /srv/app/requirements.txt
+    - flaskapp_app_name: infragame.online
+    - flaskapp_app_user: root
+    - flaskapp_app_log_directory: /srv/app/logs
+  roles:
+    - spk83.dumb-init
+  tasks:
+    - name: copy application into container
+      copy:
+        src: "../application/"
+        dest: "{{ flaskapp_app_directory }}/"
+    - name: Ensure packages required for the Flask application
+      apt: pkg={{ item }} state=present
+      with_items: '{{ flaskapp_app_packages }}'
+    - name: Install the latest pip version
+      pip:
+        name: pip
+        extra_args: -U
+    - name: Install application dependencies into virtualenv
+      pip:
+        requirements: "{{ flaskapp_app_requirements }}"
+        virtualenv: "{{ flaskapp_app_directory }}/env"
+        state: "present"
+    - name: Install supervisor
+      apt:
+        pkg: "{{ item }}"
+        state: installed
+      with_items:
+        - supervisor
+    - name: Ensure supervisor config for app
+      template:
+        src: "supervisor.conf.j2"
+        dest: "/etc/supervisor/conf.d/{{ flaskapp_app_name }}.conf"
+    - name: Ensure startup script
+      template:
+        src: gunicorn_start.j2
+        dest: "{{ flaskapp_app_directory }}/gunicorn_start"
+        mode: 0755

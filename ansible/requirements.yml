@@ -7,3 +7,4 @@
 
 # from galaxy
 - src: jdauphant.nginx
+- src: spk83.dumb-init

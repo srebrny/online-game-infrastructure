@@ -1,13 +1,26 @@
-version: "1"
+version: "2"
 services:
-   lbs:
-     image: ubuntu:trusty
-     ports:
-       - "8080:80"
-volumes:
-  data:
-    external: true
-
+  lbs:
+    image: ubuntu:trusty
+    ports:
+      - "8080:80"
+    links:
+      - whp:whp
+    command: ['/usr/local/bin/dumb-init', 'nginx', '-c', '/etc/nginx/nginx.conf', "-g", "daemon off;"]
+  whp:
+    image: ubuntu:trusty
+    ports:
+      - "8000"
+    command: ["dumb-init", "gunicorn", "application:app", "-b", "0.0.0.0:8000", "-w", "3"]
+    links:
+      - dbs:dbs
+  dbs:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - /var/lib/postgresql
+    ports:
+      - "5436:5432"
 registries: {}
   # Add optional registries used for deployment. For example:
   #  google:
