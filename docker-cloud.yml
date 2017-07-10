@@ -6,10 +6,31 @@ lb:
     - "80:80"
   roles:
     - global
+  deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 web:
   image: dockercloud/quickstart-python
   links:
     - redis
   target_num_containers: 4
+  deploy:
+    replicas: 4
+    update_config:
+      parallelism: 2
+      delay: 10s
+    restart_policy:
+      condition: on-failure
 redis:
   image: redis
+  deploy:
+    replicas: 1
+    update_config:
+      parallelism: 1
+      delay: 10s
+    restart_policy:
+      condition: on-failure
